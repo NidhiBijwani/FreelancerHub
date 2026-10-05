@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Freelancer Dashboard | FreelancerHub 2.0</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+<body>
+
+    <nav class="navbar">
+
+        <div class="logo">
+            FreelancerHub <span>2.0</span>
+        </div>
+
+        <div class="nav-actions">
+
+            <button
+                class="btn btn-secondary"
+                onclick="openContracts()"
+            >
+                Contracts
+            </button>
+
+            <button
+                class="btn btn-secondary"
+                onclick="openMessages()"
+            >
+                Messages
+            </button>
+
+            <button
+                class="btn btn-danger"
+                onclick="logout()"
+            >
+                Logout
+            </button>
+
+        </div>
+
+    </nav>
+
+
+    <main class="dashboard-container">
+
+        <section class="dashboard-header">
+
+            <div>
+
+                <h1>
+                    Welcome,
+                    <span id="userName">
+                        Freelancer
+                    </span>
+                </h1>
+
+                <p>
+                    Find projects and submit proposals.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- PROFILE -->
+
+        <section class="dashboard-section">
+
+            <h2>
+                My Profile
+            </h2>
+
+            <div
+                id="profileContainer"
+                class="profile-card"
+            >
+                Loading profile...
+            </div>
+
+        </section>
+
+
+        <!-- AVAILABLE PROJECTS -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <h2>
+                    Available Projects
+                </h2>
+
+                <button
+                    class="btn btn-secondary"
+                    onclick="loadProjects()"
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+
+            <div id="projectsContainer">
+
+                <p class="loading">
+                    Loading projects...
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- PROPOSAL MODAL -->
+
+    <div
+        id="proposalModal"
+        class="modal hidden"
+    >
+
+        <div class="modal-content">
+
+            <button
+                class="modal-close"
+                onclick="closeProposalModal()"
+            >
+                ×
+            </button>
+
+            <h2>
+                Submit Proposal
+            </h2>
+
+
+            <form id="proposalForm">
+
+                <input
+                    type="hidden"
+                    id="proposalProjectId"
+                >
+
+
+                <label>
+                    Proposed Amount
+                </label>
+
+                <input
+                    type="number"
+                    id="proposedAmount"
+                    min="1"
+                    required
+                >
+
+
+                <label>
+                    Estimated Days
+                </label>
+
+                <input
+                    type="number"
+                    id="estimatedDays"
+                    min="1"
+                    required
+                >
+
+
+                <label>
+                    Proposal
+                </label>
+
+                <textarea
+                    id="proposalText"
+                    rows="6"
+                    required
+                ></textarea>
+
+
+                <button
+                    type="submit"
+                    class="btn btn-primary auth-submit"
+                >
+                    Submit Proposal
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <script src="app.js"></script>
+
+
+    <script>
+
+        const token =
+            localStorage.getItem("token");
+
+        const role =
+            localStorage.getItem("role");
+
+
+        if (!token || role !== "FREELANCER") {
+
+            alert(
+                "Please login as a freelancer."
+            );
+
+            window.location.href =
+                "index.html";
+
+        }
+
+
+        document
+            .getElementById("userName")
+            .textContent =
+            localStorage.getItem(
+                "user_name"
+            ) || "Freelancer";
+
+
+        // LOAD PROFILE
+
+        async function loadProfile() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/freelancer/profile`,
+                        {
+                            headers: {
+                                "Authorization":
+                                    `Bearer ${token}`
+                            }
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Failed to load profile."
+                    );
+
+                }
+
+
+                const profile =
+                    data.profile ||
+                    data.freelancer ||
+                    data;
+
+
+                document
+                    .getElementById(
+                        "profileContainer"
+                    )
+                    .innerHTML = `
+
+                        <h3>
+                            ${profile.name || ""}
+                        </h3>
+
+                        <p>
+                            <strong>
+                                Title:
+                            </strong>
+
+                            ${
+                                profile.professional_title ||
+                                "Not specified"
+                            }
+                        </p>
+
+                        <p>
+                            <strong>
+                                Bio:
+                            </strong>
+
+                            ${
+                                profile.bio ||
+                                "No bio added."
+                            }
+                        </p>
+
+                        <p>
+                            <strong>
+                                Hourly Rate:
+                            </strong>
+
+                            ₹${
+                                Number(
+                                    profile.hourly_rate || 0
+                                ).toLocaleString("en-IN")
+                            }
+                        </p>
+
+                        <p>
+                            <strong>
+                                Experience:
+                            </strong>
+
+                            ${
+                                profile.experience_years ||
+                                0
+                            } years
+                        </p>
+
+                        <p>
+                            <strong>
+                                Location:
+                            </strong>
+
+                            ${
+                                profile.location ||
+                                "Not specified"
+                            }
+                        </p>
+
+                    `;
+
+
+            } catch (error) {
+
+                console.error(
+                    "Profile error:",
+                    error
+                );
+
+                document
+                    .getElementById(
+                        "profileContainer"
+                    )
+                    .innerHTML = `
+                        <div class="error-message">
+                            ${error.message}
+                        </div>
+                    `;
+
+            }
+
+        }
+
+
+        // LOAD PROJECTS
+
+        async function loadProjects() {
+
+            const container =
+                document.getElementById(
+                    "projectsContainer"
+                );
+
+
+            container.innerHTML = `
+                <p class="loading">
+                    Loading projects...
+                </p>
+            `;
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/freelancer/projects`,
+                        {
+                            headers: {
+                                "Authorization":
+                                    `Bearer ${token}`
+                            }
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Failed to load projects."
+                    );
+
+                }
+
+
+                const projects =
+                    data.projects || [];
+
+
+                if (projects.length === 0) {
+
+                    container.innerHTML = `
+                        <div class="empty-state">
+
+                            <h3>
+                                No Open Projects
+                            </h3>
+
+                            <p>
+                                New projects will appear here.
+                            </p>
+
+                        </div>
+                    `;
+
+                    return;
+
+                }
+
+
+                container.innerHTML =
+                    projects.map(
+                        project => `
+
+                            <div class="project-card">
+
+                                <div class="project-header">
+
+                                    <div>
+
+                                        <h3>
+                                            ${project.title}
+                                        </h3>
+
+                                        <p>
+                                            ${project.category || ""}
+                                        </p>
+
+                                    </div>
+
+                                    <span class="status open">
+                                        ${project.status}
+                                    </span>
+
+                                </div>
+
+
+                                <p>
+                                    ${project.description}
+                                </p>
+
+
+                                <div class="project-details">
+
+                                    <span>
+                                        <strong>
+                                            Budget:
+                                        </strong>
+
+                                        ₹${Number(
+                                            project.budget || 0
+                                        ).toLocaleString("en-IN")}
+                                    </span>
+
+
+                                    <span>
+                                        <strong>
+                                            Deadline:
+                                        </strong>
+
+                                        ${formatDate(
+                                            project.deadline
+                                        )}
+                                    </span>
+
+                                </div>
+
+
+                                <button
+                                    class="btn btn-primary"
+                                    onclick="openProposalModal(
+                                        ${project.project_id}
+                                    )"
+                                >
+                                    Submit Proposal
+                                </button>
+
+                            </div>
+
+                        `
+                    ).join("");
+
+
+            } catch (error) {
+
+                console.error(
+                    "Project error:",
+                    error
+                );
+
+                container.innerHTML = `
+                    <div class="error-message">
+                        ${error.message}
+                    </div>
+                `;
+
+            }
+
+        }
+
+
+        // OPEN PROPOSAL
+
+        function openProposalModal(
+            projectId
+        ) {
+
+            document
+                .getElementById(
+                    "proposalProjectId"
+                )
+                .value =
+                projectId;
+
+
+            document
+                .getElementById(
+                    "proposalModal"
+                )
+                .classList.remove(
+                    "hidden"
+                );
+
+        }
+
+
+        // CLOSE PROPOSAL
+
+        function closeProposalModal() {
+
+            document
+                .getElementById(
+                    "proposalModal"
+                )
+                .classList.add(
+                    "hidden"
+                );
+
+
+            document
+                .getElementById(
+                    "proposalForm"
+                )
+                .reset();
+
+        }
+
+
+        // SUBMIT PROPOSAL
+
+        document
+            .getElementById(
+                "proposalForm"
+            )
+            .addEventListener(
+                "submit",
+                async function(event) {
+
+                    event.preventDefault();
+
+
+                    const projectId =
+                        Number(
+                            document
+                                .getElementById(
+                                    "proposalProjectId"
+                                )
+                                .value
+                        );
+
+
+                    const proposedAmount =
+                        Number(
+                            document
+                                .getElementById(
+                                    "proposedAmount"
+                                )
+                                .value
+                        );
+
+
+                    const estimatedDays =
+                        Number(
+                            document
+                                .getElementById(
+                                    "estimatedDays"
+                                )
+                                .value
+                        );
+
+
+                    const proposalText =
+                        document
+                            .getElementById(
+                                "proposalText"
+                            )
+                            .value
+                            .trim();
+
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                `${API_URL}/freelancer/proposals`,
+                                {
+                                    method: "POST",
+
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json",
+
+                                        "Authorization":
+                                            `Bearer ${token}`
+                                    },
+
+                                    body:
+                                        JSON.stringify({
+                                            project_id:
+                                                projectId,
+
+                                            proposal_text:
+                                                proposalText,
+
+                                            proposed_amount:
+                                                proposedAmount,
+
+                                            estimated_days:
+                                                estimatedDays
+                                        })
+                                }
+                            );
+
+
+                        const data =
+                            await response.json();
+
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                data.message ||
+                                "Failed to submit proposal."
+                            );
+
+                        }
+
+
+                        alert(
+                            "Proposal submitted successfully!"
+                        );
+
+
+                        closeProposalModal();
+
+
+                        loadProjects();
+
+
+                    } catch (error) {
+
+                        console.error(
+                            "Proposal error:",
+                            error
+                        );
+
+                        alert(
+                            error.message
+                        );
+
+                    }
+
+                }
+            );
+
+
+        function openContracts() {
+
+            window.location.href =
+                "contracts.html";
+
+        }
+
+
+        function openMessages() {
+
+            window.location.href =
+                "communication.html";
+
+        }
+
+
+        function formatDate(
+            date
+        ) {
+
+            if (!date) {
+                return "-";
+            }
+
+            return new Date(
+                date
+            ).toLocaleDateString(
+                "en-IN"
+            );
+
+        }
+
+
+        loadProfile();
+
+        loadProjects();
+
+    </script>
+
+</body>
+
+</html>

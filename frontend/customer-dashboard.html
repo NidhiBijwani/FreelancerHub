@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Customer Dashboard | FreelancerHub 2.0</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+            FreelancerHub <span>2.0</span>
+        </div>
+
+        <div class="nav-actions">
+
+            <button
+                class="btn btn-secondary"
+                onclick="openContracts()"
+            >
+                Contracts
+            </button>
+
+            <button
+                class="btn btn-secondary"
+                onclick="openMessages()"
+            >
+                Messages
+            </button>
+
+            <button
+                class="btn btn-danger"
+                onclick="logout()"
+            >
+                Logout
+            </button>
+
+        </div>
+
+    </nav>
+
+
+    <!-- MAIN -->
+
+    <main class="dashboard-container">
+
+        <section class="dashboard-header">
+
+            <div>
+
+                <h1>
+                    Welcome,
+                    <span id="userName">
+                        Customer
+                    </span>
+                </h1>
+
+                <p>
+                    Manage your projects and freelancers.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- STATISTICS -->
+
+        <section class="stats-grid">
+
+            <div class="stat-card">
+
+                <h3>
+                    Total Projects
+                </h3>
+
+                <p id="totalProjects">
+                    0
+                </p>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <h3>
+                    Open Projects
+                </h3>
+
+                <p id="openProjects">
+                    0
+                </p>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <h3>
+                    In Progress
+                </h3>
+
+                <p id="inProgressProjects">
+                    0
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- CREATE PROJECT -->
+
+        <section class="dashboard-section">
+
+            <h2>
+                Create New Project
+            </h2>
+
+            <form id="projectForm">
+
+                <div class="form-grid">
+
+                    <div>
+
+                        <label>
+                            Project Title
+                        </label>
+
+                        <input
+                            type="text"
+                            id="projectTitle"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div>
+
+                        <label>
+                            Category
+                        </label>
+
+                        <input
+                            type="text"
+                            id="projectCategory"
+                            placeholder="Web Development"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div>
+
+                        <label>
+                            Budget
+                        </label>
+
+                        <input
+                            type="number"
+                            id="projectBudget"
+                            min="1"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div>
+
+                        <label>
+                            Deadline
+                        </label>
+
+                        <input
+                            type="date"
+                            id="projectDeadline"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <label>
+                    Description
+                </label>
+
+                <textarea
+                    id="projectDescription"
+                    rows="5"
+                    required
+                ></textarea>
+
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+                    Create Project
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- PROJECTS -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <h2>
+                    My Projects
+                </h2>
+
+                <button
+                    class="btn btn-secondary"
+                    onclick="loadProjects()"
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+
+            <div id="projectsContainer">
+
+                <p class="loading">
+                    Loading projects...
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- APP JS -->
+
+    <script src="app.js"></script>
+
+
+    <script>
+
+        const token =
+            localStorage.getItem("token");
+
+        const role =
+            localStorage.getItem("role");
+
+
+        if (!token || role !== "CUSTOMER") {
+
+            alert(
+                "Please login as a customer."
+            );
+
+            window.location.href =
+                "index.html";
+
+        }
+
+
+        document
+            .getElementById("userName")
+            .textContent =
+            localStorage.getItem(
+                "user_name"
+            ) || "Customer";
+
+
+        // LOAD PROJECTS
+
+        async function loadProjects() {
+
+            const container =
+                document.getElementById(
+                    "projectsContainer"
+                );
+
+
+            container.innerHTML = `
+                <p class="loading">
+                    Loading projects...
+                </p>
+            `;
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/customer/projects`,
+                        {
+                            headers: {
+                                "Authorization":
+                                    `Bearer ${token}`
+                            }
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Failed to load projects."
+                    );
+
+                }
+
+
+                const projects =
+                    data.projects || [];
+
+
+                updateStatistics(
+                    projects
+                );
+
+
+                displayProjects(
+                    projects
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Project loading error:",
+                    error
+                );
+
+
+                container.innerHTML = `
+                    <div class="error-message">
+                        ${error.message}
+                    </div>
+                `;
+
+            }
+
+        }
+
+
+        // UPDATE STATISTICS
+
+        function updateStatistics(
+            projects
+        ) {
+
+            document
+                .getElementById(
+                    "totalProjects"
+                )
+                .textContent =
+                projects.length;
+
+
+            document
+                .getElementById(
+                    "openProjects"
+                )
+                .textContent =
+                projects.filter(
+                    project =>
+                        project.status === "OPEN"
+                ).length;
+
+
+            document
+                .getElementById(
+                    "inProgressProjects"
+                )
+                .textContent =
+                projects.filter(
+                    project =>
+                        project.status === "IN_PROGRESS"
+                ).length;
+
+        }
+
+
+        // DISPLAY PROJECTS
+
+        function displayProjects(
+            projects
+        ) {
+
+            const container =
+                document.getElementById(
+                    "projectsContainer"
+                );
+
+
+            if (projects.length === 0) {
+
+                container.innerHTML = `
+                    <div class="empty-state">
+
+                        <h3>
+                            No Projects Yet
+                        </h3>
+
+                        <p>
+                            Create your first project above.
+                        </p>
+
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            container.innerHTML =
+                projects.map(
+                    project => {
+
+                        const statusClass =
+                            (
+                                project.status ||
+                                ""
+                            ).toLowerCase();
+
+
+                        return `
+
+                            <div class="project-card">
+
+                                <div class="project-header">
+
+                                    <div>
+
+                                        <h3>
+                                            ${project.title}
+                                        </h3>
+
+                                        <p>
+                                            ${project.category || ""}
+                                        </p>
+
+                                    </div>
+
+
+                                    <span
+                                        class="status ${statusClass}"
+                                    >
+                                        ${project.status}
+                                    </span>
+
+                                </div>
+
+
+                                <p>
+                                    ${project.description}
+                                </p>
+
+
+                                <div class="project-details">
+
+                                    <span>
+                                        <strong>
+                                            Budget:
+                                        </strong>
+
+                                        ₹${Number(
+                                            project.budget || 0
+                                        ).toLocaleString("en-IN")}
+                                    </span>
+
+
+                                    <span>
+                                        <strong>
+                                            Deadline:
+                                        </strong>
+
+                                        ${formatDate(
+                                            project.deadline
+                                        )}
+                                    </span>
+
+                                </div>
+
+
+                                ${
+                                    project.status === "OPEN"
+                                    ?
+
+                                    `
+                                    <button
+                                        class="btn btn-primary"
+                                        onclick="viewProposals(
+                                            ${project.project_id}
+                                        )"
+                                    >
+                                        View Proposals
+                                    </button>
+                                    `
+
+                                    :
+
+                                    project.status === "IN_PROGRESS"
+
+                                    ?
+
+                                    `
+                                    <button
+                                        class="btn btn-secondary"
+                                        onclick="openContracts()"
+                                    >
+                                        View Contract
+                                    </button>
+                                    `
+
+                                    :
+
+                                    ""
+                                }
+
+                            </div>
+
+                        `;
+
+                    }
+                ).join("");
+
+        }
+
+
+        // CREATE PROJECT
+
+        document
+            .getElementById("projectForm")
+            .addEventListener(
+                "submit",
+                async function(event) {
+
+                    event.preventDefault();
+
+
+                    const title =
+                        document
+                            .getElementById(
+                                "projectTitle"
+                            )
+                            .value
+                            .trim();
+
+
+                    const description =
+                        document
+                            .getElementById(
+                                "projectDescription"
+                            )
+                            .value
+                            .trim();
+
+
+                    const category =
+                        document
+                            .getElementById(
+                                "projectCategory"
+                            )
+                            .value
+                            .trim();
+
+
+                    const budget =
+                        Number(
+                            document
+                                .getElementById(
+                                    "projectBudget"
+                                )
+                                .value
+                        );
+
+
+                    const deadline =
+                        document
+                            .getElementById(
+                                "projectDeadline"
+                            )
+                            .value;
+
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                `${API_URL}/customer/projects`,
+                                {
+                                    method: "POST",
+
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json",
+
+                                        "Authorization":
+                                            `Bearer ${token}`
+                                    },
+
+                                    body:
+                                        JSON.stringify({
+                                            title,
+                                            description,
+                                            category,
+                                            budget,
+                                            deadline
+                                        })
+                                }
+                            );
+
+
+                        const data =
+                            await response.json();
+
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                data.message ||
+                                "Failed to create project."
+                            );
+
+                        }
+
+
+                        alert(
+                            "Project created successfully!"
+                        );
+
+
+                        document
+                            .getElementById(
+                                "projectForm"
+                            )
+                            .reset();
+
+
+                        loadProjects();
+
+
+                    } catch (error) {
+
+                        console.error(
+                            "Create project error:",
+                            error
+                        );
+
+                        alert(
+                            error.message
+                        );
+
+                    }
+
+                }
+            );
+
+
+        // VIEW PROPOSALS
+
+        function viewProposals(
+            projectId
+        ) {
+
+            window.location.href =
+                `project-proposals.html?projectId=${projectId}`;
+
+        }
+
+
+        // CONTRACTS
+
+        function openContracts() {
+
+            window.location.href =
+                "contracts.html";
+
+        }
+
+
+        // MESSAGES
+
+        function openMessages() {
+
+            window.location.href =
+                "communication.html";
+
+        }
+
+
+        // DATE
+
+        function formatDate(
+            date
+        ) {
+
+            if (!date) {
+                return "-";
+            }
+
+            return new Date(
+                date
+            ).toLocaleDateString(
+                "en-IN"
+            );
+
+        }
+
+
+        // INITIAL LOAD
+
+        loadProjects();
+
+    </script>
+
+</body>
+
+</html>

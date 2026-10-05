@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Contracts | FreelancerHub 2.0</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+</head>
+
+<body>
+
+    <nav class="navbar">
+
+        <div class="logo">
+            FreelancerHub <span>2.0</span>
+        </div>
+
+        <div class="nav-actions">
+
+            <button
+                class="btn btn-secondary"
+                onclick="goDashboard()"
+            >
+                ← Dashboard
+            </button>
+
+            <button
+                class="btn btn-danger"
+                onclick="logout()"
+            >
+                Logout
+            </button>
+
+        </div>
+
+    </nav>
+
+
+    <main class="dashboard-container">
+
+        <section class="dashboard-header">
+
+            <div>
+
+                <h1>Contracts</h1>
+
+                <p id="welcomeText">
+                    Manage your active and completed contracts.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <h2>My Contracts</h2>
+
+                <span
+                    id="contractCount"
+                    class="role-badge"
+                >
+                    0 Contracts
+                </span>
+
+            </div>
+
+
+            <div id="contractsContainer">
+
+                <p class="loading">
+                    Loading contracts...
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- REVIEW MODAL -->
+
+    <div
+        id="reviewModal"
+        class="modal hidden"
+    >
+
+        <div class="modal-content">
+
+            <button
+                class="modal-close"
+                onclick="closeReviewModal()"
+            >
+                ×
+            </button>
+
+            <h2>Submit Review</h2>
+
+            <p class="auth-subtitle">
+                Share your experience with the freelancer.
+            </p>
+
+
+            <form id="reviewForm">
+
+                <input
+                    type="hidden"
+                    id="reviewProjectId"
+                >
+
+                <input
+                    type="hidden"
+                    id="reviewFreelancerId"
+                >
+
+
+                <label for="rating">
+                    Rating
+                </label>
+
+                <select
+                    id="rating"
+                    required
+                >
+
+                    <option value="">
+                        Select rating
+                    </option>
+
+                    <option value="5">
+                        5 - Excellent
+                    </option>
+
+                    <option value="4">
+                        4 - Very Good
+                    </option>
+
+                    <option value="3">
+                        3 - Good
+                    </option>
+
+                    <option value="2">
+                        2 - Fair
+                    </option>
+
+                    <option value="1">
+                        1 - Poor
+                    </option>
+
+                </select>
+
+
+                <label for="reviewComment">
+                    Comment
+                </label>
+
+                <textarea
+                    id="reviewComment"
+                    rows="5"
+                    placeholder="Write your review..."
+                    required
+                ></textarea>
+
+
+                <button
+                    type="submit"
+                    class="btn btn-primary auth-submit"
+                >
+                    Submit Review
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <script src="app.js"></script>
+
+
+    <script>
+
+        const token =
+            localStorage.getItem("token");
+
+        const role =
+            localStorage.getItem("role");
+
+
+        if (
+            !token ||
+            (
+                role !== "CUSTOMER" &&
+                role !== "FREELANCER"
+            )
+        ) {
+
+            alert(
+                "Please login first."
+            );
+
+            window.location.href =
+                "index.html";
+
+        }
+
+
+        // LOAD CONTRACTS
+
+        async function loadContracts() {
+
+            try {
+
+                const endpoint =
+                    role === "CUSTOMER"
+                        ? "/contracts/customer"
+                        : "/contracts/freelancer";
+
+
+                const response =
+                    await fetch(
+                        `${API_URL}${endpoint}`,
+                        {
+                            headers: {
+                                "Authorization":
+                                    `Bearer ${token}`
+                            }
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Failed to load contracts."
+                    );
+
+                }
+
+
+                displayContracts(
+                    data.contracts || []
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Contract error:",
+                    error
+                );
+
+                document
+                    .getElementById(
+                        "contractsContainer"
+                    )
+                    .innerHTML = `
+                        <div class="error-message">
+                            ${error.message}
+                        </div>
+                    `;
+
+            }
+
+        }
+
+
+        // DISPLAY CONTRACTS
+
+        function displayContracts(
+            contracts
+        ) {
+
+            const container =
+                document.getElementById(
+                    "contractsContainer"
+                );
+
+
+            document
+                .getElementById(
+                    "contractCount"
+                )
+                .textContent =
+                `${contracts.length} Contract${contracts.length === 1 ? "" : "s"}`;
+
+
+            if (contracts.length === 0) {
+
+                container.innerHTML = `
+                    <div class="empty-state">
+
+                        <h3>
+                            No Contracts Yet
+                        </h3>
+
+                        <p>
+                            Your contracts will appear here
+                            after a proposal is accepted.
+                        </p>
+
+                    </div>
+                `;
+
+                return;
+
+            }
+
+
+            container.innerHTML =
+                contracts.map(
+                    contract => {
+
+                        const status =
+                            contract.status ||
+                            "ACTIVE";
+
+
+                        const statusClass =
+                            status.toLowerCase();
+
+
+                        let actionButton = "";
+
+
+                        if (
+                            role === "CUSTOMER" &&
+                            status === "COMPLETED"
+                        ) {
+
+                            actionButton = `
+
+                                <button
+                                    class="btn btn-primary"
+                                    onclick="openReviewModal(
+                                        ${contract.project_id},
+                                        ${contract.freelancer_id}
+                                    )"
+                                >
+                                    Write Review
+                                </button>
+
+                            `;
+
+                        }
+
+
+                        return `
+
+                            <div class="contract-card">
+
+                                <div class="contract-header">
+
+                                    <div>
+
+                                        <h3>
+                                            ${
+                                                contract.project_title ||
+                                                "Project"
+                                            }
+                                        </h3>
+
+                                        <p>
+
+                                            ${
+                                                role === "CUSTOMER"
+                                                ? "Freelancer: "
+                                                : "Customer: "
+                                            }
+
+                                            ${
+                                                contract.freelancer_name ||
+                                                contract.customer_name ||
+                                                "User"
+                                            }
+
+                                        </p>
+
+                                    </div>
+
+
+                                    <span
+                                        class="status ${statusClass}"
+                                    >
+                                        ${status}
+                                    </span>
+
+                                </div>
+
+
+                                <div class="contract-details">
+
+                                    <div>
+
+                                        <strong>
+                                            Agreed Amount
+                                        </strong>
+
+                                        <p>
+                                            ₹${Number(
+                                                contract.agreed_amount || 0
+                                            ).toLocaleString("en-IN")}
+                                        </p>
+
+                                    </div>
+
+
+                                    <div>
+
+                                        <strong>
+                                            Start Date
+                                        </strong>
+
+                                        <p>
+                                            ${formatDate(
+                                                contract.start_date
+                                            )}
+                                        </p>
+
+                                    </div>
+
+
+                                    <div>
+
+                                        <strong>
+                                            End Date
+                                        </strong>
+
+                                        <p>
+                                            ${formatDate(
+                                                contract.end_date
+                                            )}
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="contract-footer">
+
+                                    <span>
+                                        Contract ID:
+                                        #${contract.contract_id}
+                                    </span>
+
+                                    ${actionButton}
+
+                                </div>
+
+                            </div>
+
+                        `;
+
+                    }
+                ).join("");
+
+        }
+
+
+        // FORMAT DATE
+
+        function formatDate(
+            date
+        ) {
+
+            if (!date) {
+                return "-";
+            }
+
+
+            return new Date(
+                date
+            ).toLocaleDateString(
+                "en-IN"
+            );
+
+        }
+
+
+        // OPEN REVIEW MODAL
+
+        function openReviewModal(
+            projectId,
+            freelancerId
+        ) {
+
+            document
+                .getElementById(
+                    "reviewProjectId"
+                )
+                .value =
+                projectId;
+
+
+            document
+                .getElementById(
+                    "reviewFreelancerId"
+                )
+                .value =
+                freelancerId;
+
+
+            document
+                .getElementById(
+                    "reviewModal"
+                )
+                .classList.remove(
+                    "hidden"
+                );
+
+        }
+
+
+        // CLOSE REVIEW MODAL
+
+        function closeReviewModal() {
+
+            document
+                .getElementById(
+                    "reviewModal"
+                )
+                .classList.add(
+                    "hidden"
+                );
+
+
+            document
+                .getElementById(
+                    "reviewForm"
+                )
+                .reset();
+
+        }
+
+
+        // SUBMIT REVIEW
+
+        document
+            .getElementById(
+                "reviewForm"
+            )
+            .addEventListener(
+                "submit",
+                async function(event) {
+
+                    event.preventDefault();
+
+
+                    const projectId =
+                        document
+                            .getElementById(
+                                "reviewProjectId"
+                            )
+                            .value;
+
+
+                    const freelancerId =
+                        document
+                            .getElementById(
+                                "reviewFreelancerId"
+                            )
+                            .value;
+
+
+                    const rating =
+                        document
+                            .getElementById(
+                                "rating"
+                            )
+                            .value;
+
+
+                    const comment =
+                        document
+                            .getElementById(
+                                "reviewComment"
+                            )
+                            .value
+                            .trim();
+
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                `${API_URL}/contracts/reviews`,
+                                {
+                                    method: "POST",
+
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json",
+
+                                        "Authorization":
+                                            `Bearer ${token}`
+                                    },
+
+                                    body:
+                                        JSON.stringify({
+                                            project_id:
+                                                Number(
+                                                    projectId
+                                                ),
+
+                                            freelancer_id:
+                                                Number(
+                                                    freelancerId
+                                                ),
+
+                                            rating:
+                                                Number(
+                                                    rating
+                                                ),
+
+                                            comment
+                                        })
+                                }
+                            );
+
+
+                        const data =
+                            await response.json();
+
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                data.message ||
+                                "Failed to submit review."
+                            );
+
+                        }
+
+
+                        alert(
+                            "Review submitted successfully!"
+                        );
+
+
+                        closeReviewModal();
+
+
+                        loadContracts();
+
+
+                    } catch (error) {
+
+                        console.error(
+                            "Review error:",
+                            error
+                        );
+
+                        alert(
+                            error.message
+                        );
+
+                    }
+
+                }
+            );
+
+
+        // DASHBOARD
+
+        function goDashboard() {
+
+            if (role === "CUSTOMER") {
+
+                window.location.href =
+                    "customer-dashboard.html";
+
+            } else {
+
+                window.location.href =
+                    "freelancer-dashboard.html";
+
+            }
+
+        }
+
+
+        // INITIAL LOAD
+
+        loadContracts();
+
+    </script>
+
+</body>
+
+</html>

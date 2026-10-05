@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Project Proposals | FreelancerHub 2.0</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+            FreelancerHub <span>2.0</span>
+        </div>
+
+        <div class="nav-actions">
+
+            <button
+                class="btn btn-secondary"
+                onclick="goBack()"
+            >
+                ← Dashboard
+            </button>
+
+            <button
+                class="btn btn-danger"
+                onclick="logout()"
+            >
+                Logout
+            </button>
+
+        </div>
+
+    </nav>
+
+
+    <!-- MAIN CONTENT -->
+
+    <main class="dashboard-container">
+
+        <section class="dashboard-header">
+
+            <div>
+
+                <h1>Project Proposals</h1>
+
+                <p>
+                    Review proposals submitted by freelancers.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- PROJECT INFORMATION -->
+
+        <section
+            class="dashboard-section"
+            id="projectInfo"
+        >
+
+            <h2>Project Details</h2>
+
+            <div id="projectDetails">
+                Loading project details...
+            </div>
+
+        </section>
+
+
+        <!-- PROPOSALS -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <h2>Received Proposals</h2>
+
+                <span
+                    id="proposalCount"
+                    class="role-badge"
+                >
+                    0 Proposals
+                </span>
+
+            </div>
+
+            <div id="proposalsContainer">
+
+                <p class="loading">
+                    Loading proposals...
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- ACCEPT CONFIRMATION MODAL -->
+
+    <div
+        id="confirmModal"
+        class="modal hidden"
+    >
+
+        <div class="modal-content">
+
+            <button
+                class="modal-close"
+                onclick="closeConfirmModal()"
+            >
+                ×
+            </button>
+
+            <h2>Accept Proposal?</h2>
+
+            <p>
+                Are you sure you want to accept this proposal?
+                A contract will be created and the project will
+                move to <strong>IN PROGRESS</strong>.
+            </p>
+
+            <div class="modal-actions">
+
+                <button
+                    class="btn btn-secondary"
+                    onclick="closeConfirmModal()"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    id="confirmAcceptButton"
+                    class="btn btn-primary"
+                >
+                    Accept Proposal
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script src="app.js"></script>
+
+
+    <script>
+        const token =
+            localStorage.getItem("token");
+
+        const role =
+            localStorage.getItem("role");
+
+
+        let selectedProposalId = null;
+
+
+        // CHECK LOGIN
+
+        if (!token || role !== "CUSTOMER") {
+
+            alert(
+                "Please login as a customer."
+            );
+
+            window.location.href =
+                "index.html";
+
+        }
+
+
+        // GET PROJECT ID FROM URL
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        const projectId =
+            params.get("projectId");
+
+
+        if (!projectId) {
+
+            alert(
+                "Project ID is missing."
+            );
+
+            window.location.href =
+                "customer-dashboard.html";
+
+        }
+
+
+        // LOAD PROPOSALS
+
+        async function loadProposals() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/projects/${projectId}/proposals`,
+                        {
+                            headers: {
+                                "Authorization":
+                                    `Bearer ${token}`
+                            }
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Failed to load proposals."
+                    );
+
+                }
+
+
+                displayProposals(data);
+
+
+            } catch (error) {
+
+                console.error(
+                    "Proposal loading error:",
+                    error
+                );
+
+                document
+                    .getElementById(
+                        "proposalsContainer"
+                    )
+                    .innerHTML = `
+                        <div class="error-message">
+                            ${error.message}
+                        </div>
+                    `;
+
+            }
+
+        }
+
+
+        // DISPLAY PROPOSALS
+
+        function displayProposals(data) {
+
+            const container =
+                document.getElementById(
+                    "proposalsContainer"
+                );
+
+
+            const proposals =
+                data.proposals || [];
+
+
+            document
+                .getElementById("proposalCount")
+                .textContent =
+                `${proposals.length} Proposal${proposals.length === 1 ? "" : "s"}`;
+
+
+            if (proposals.length === 0) {
+
+                container.innerHTML = `
+                    <div class="empty-state">
+
+                        <h3>No Proposals Yet</h3>
+
+                        <p>
+                            No freelancer has submitted
+                            a proposal for this project yet.
+                        </p>
+
+                    </div>
+                `;
+
+                return;
+
+            }
+
+
+            // PROJECT DETAILS
+
+            const firstProposal =
+                proposals[0];
+
+
+            const projectTitle =
+                firstProposal.project_title ||
+                "Project";
+
+
+            const projectDescription =
+                firstProposal.project_description ||
+                "Project details";
+
+
+            document
+                .getElementById("projectDetails")
+                .innerHTML = `
+                    <div class="project-card">
+
+                        <h3>
+                            ${projectTitle}
+                        </h3>
+
+                        <p>
+                            ${projectDescription}
+                        </p>
+
+                    </div>
+                `;
+
+
+            // PROPOSAL CARDS
+
+            container.innerHTML =
+                proposals.map(
+                    proposal => {
+
+                        const status =
+                            proposal.status ||
+                            "PENDING";
+
+
+                        const statusClass =
+                            status.toLowerCase();
+
+
+                        return `
+
+                            <div class="proposal-card">
+
+                                <div class="proposal-header">
+
+                                    <div>
+
+                                        <h3>
+                                            ${proposal.freelancer_name || "Freelancer"}
+                                        </h3>
+
+                                        <p class="proposal-email">
+                                            ${proposal.freelancer_email || ""}
+                                        </p>
+
+                                    </div>
+
+                                    <span
+                                        class="status ${statusClass}"
+                                    >
+                                        ${status}
+                                    </span>
+
+                                </div>
+
+
+                                <div class="proposal-details">
+
+                                    <div>
+
+                                        <strong>
+                                            Proposed Amount
+                                        </strong>
+
+                                        <p>
+                                            ₹${Number(
+                                                proposal.proposed_amount || 0
+                                            ).toLocaleString("en-IN")}
+                                        </p>
+
+                                    </div>
+
+
+                                    <div>
+
+                                        <strong>
+                                            Estimated Days
+                                        </strong>
+
+                                        <p>
+                                            ${proposal.estimated_days || "-"} days
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="proposal-text">
+
+                                    <strong>
+                                        Proposal
+                                    </strong>
+
+                                    <p>
+                                        ${proposal.proposal_text || "No proposal text provided."}
+                                    </p>
+
+                                </div>
+
+
+                                ${
+                                    status === "PENDING"
+                                    ?
+
+                                    `
+                                    <div class="proposal-actions">
+
+                                        <button
+                                            class="btn btn-primary"
+                                            onclick="openConfirmModal(${proposal.proposal_id})"
+                                        >
+                                            Accept Proposal
+                                        </button>
+
+                                    </div>
+                                    `
+
+                                    :
+
+                                    ""
+                                }
+
+                            </div>
+
+                        `;
+
+                    }
+                ).join("");
+
+        }
+
+
+        // OPEN CONFIRMATION MODAL
+
+        function openConfirmModal(
+            proposalId
+        ) {
+
+            selectedProposalId =
+                proposalId;
+
+            document
+                .getElementById(
+                    "confirmModal"
+                )
+                .classList.remove(
+                    "hidden"
+                );
+
+        }
+
+
+        // CLOSE CONFIRMATION MODAL
+
+        function closeConfirmModal() {
+
+            selectedProposalId =
+                null;
+
+            document
+                .getElementById(
+                    "confirmModal"
+                )
+                .classList.add(
+                    "hidden"
+                );
+
+        }
+
+
+        // ACCEPT PROPOSAL
+
+        document
+            .getElementById(
+                "confirmAcceptButton"
+            )
+            .addEventListener(
+                "click",
+                acceptProposal
+            );
+
+
+        async function acceptProposal() {
+
+            if (!selectedProposalId) {
+                return;
+            }
+
+
+            const button =
+                document.getElementById(
+                    "confirmAcceptButton"
+                );
+
+
+            button.disabled = true;
+
+            button.textContent =
+                "Accepting...";
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/projects/proposals/${selectedProposalId}/accept`,
+                        {
+                            method: "PUT",
+
+                            headers: {
+                                "Authorization":
+                                    `Bearer ${token}`
+                            }
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Failed to accept proposal."
+                    );
+
+                }
+
+
+                alert(
+                    "Proposal accepted successfully! Contract created."
+                );
+
+
+                closeConfirmModal();
+
+
+                loadProposals();
+
+
+            } catch (error) {
+
+                console.error(
+                    "Accept proposal error:",
+                    error
+                );
+
+                alert(
+                    error.message
+                );
+
+
+            } finally {
+
+                button.disabled =
+                    false;
+
+                button.textContent =
+                    "Accept Proposal";
+
+            }
+
+        }
+
+
+        // BACK TO DASHBOARD
+
+        function goBack() {
+
+            window.location.href =
+                "customer-dashboard.html";
+
+        }
+
+
+        // LOAD DATA
+
+        loadProposals();
+
+    </script>
+
+</body>
+
+</html>

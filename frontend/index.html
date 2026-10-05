@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>FreelancerHub 2.0</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+
+        <div class="logo">
+            FreelancerHub
+        </div>
+
+        <nav>
+            <a href="#home">Home</a>
+            <a href="#about">About</a>
+            <a href="#features">Features</a>
+            <a href="#contact">Contact</a>
+        </nav>
+
+        <div class="nav-buttons">
+            <button
+                class="btn btn-outline"
+                onclick="showLogin()"
+            >
+                Login
+            </button>
+
+            <button
+                class="btn btn-primary"
+                onclick="showRegister()"
+            >
+                Register
+            </button>
+        </div>
+
+    </header>
+
+
+    <!-- HERO SECTION -->
+    <section
+        id="home"
+        class="hero"
+    >
+
+        <div class="hero-content">
+
+            <p class="hero-tag">
+                FREELANCERHUB 2.0
+            </p>
+
+            <h1>
+                Connect.
+                <span>Work.</span>
+                Grow.
+            </h1>
+
+            <p class="hero-description">
+                A smart freelancing platform that connects
+                talented freelancers with customers looking
+                for quality work.
+            </p>
+
+            <div class="hero-buttons">
+
+                <button
+                    class="btn btn-primary btn-large"
+                    onclick="showRegister()"
+                >
+                    Get Started
+                </button>
+
+                <button
+                    class="btn btn-outline btn-large"
+                    onclick="scrollToFeatures()"
+                >
+                    Explore Features
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div class="hero-card">
+
+            <div class="card-icon">
+                💼
+            </div>
+
+            <h3>
+                Find Your Next Opportunity
+            </h3>
+
+            <p>
+                Discover projects, submit proposals,
+                collaborate with clients and build
+                your professional profile.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- ABOUT -->
+    <section
+        id="about"
+        class="section"
+    >
+
+        <div class="section-heading">
+
+            <p class="section-tag">
+                ABOUT US
+            </p>
+
+            <h2>
+                One Platform for Freelancers & Customers
+            </h2>
+
+            <p>
+                FreelancerHub 2.0 simplifies the entire
+                freelancing process — from finding projects
+                to managing contracts and reviews.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- FEATURES -->
+    <section
+        id="features"
+        class="section features-section"
+    >
+
+        <div class="section-heading">
+
+            <p class="section-tag">
+                FEATURES
+            </p>
+
+            <h2>
+                Everything You Need
+            </h2>
+
+        </div>
+
+
+        <div class="features-grid">
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    🔐
+                </div>
+
+                <h3>
+                    Secure Authentication
+                </h3>
+
+                <p>
+                    JWT-based authentication with
+                    role-based access control.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    📋
+                </div>
+
+                <h3>
+                    Project Management
+                </h3>
+
+                <p>
+                    Customers can create projects and
+                    manage their requirements.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    💡
+                </div>
+
+                <h3>
+                    Smart Proposals
+                </h3>
+
+                <p>
+                    Freelancers can discover projects
+                    and submit proposals.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    🤝
+                </div>
+
+                <h3>
+                    Contracts
+                </h3>
+
+                <p>
+                    Accepted proposals automatically
+                    create contracts.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    💬
+                </div>
+
+                <h3>
+                    Communication
+                </h3>
+
+                <p>
+                    Users can exchange messages and
+                    receive notifications.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    ⭐
+                </div>
+
+                <h3>
+                    Reviews
+                </h3>
+
+                <p>
+                    Customers can review freelancers
+                    after completing projects.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- CONTACT -->
+    <section
+        id="contact"
+        class="section contact-section"
+    >
+
+        <div class="section-heading">
+
+            <p class="section-tag">
+                CONTACT
+            </p>
+
+            <h2>
+                Ready to Get Started?
+            </h2>
+
+            <p>
+                Join FreelancerHub 2.0 and start
+                building meaningful professional
+                connections.
+            </p>
+
+            <button
+                class="btn btn-primary btn-large"
+                onclick="showRegister()"
+            >
+                Create Your Account
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- FOOTER -->
+    <footer>
+
+        <p>
+            © 2026 FreelancerHub 2.0
+        </p>
+
+        <p>
+            Built with HTML, CSS, JavaScript,
+            Node.js & MySQL
+        </p>
+
+    </footer>
+
+
+    <!-- LOGIN / REGISTER MODAL -->
+    <div
+        id="authModal"
+        class="modal hidden"
+    >
+
+        <div class="modal-content">
+
+            <button
+                class="close-btn"
+                onclick="closeModal()"
+            >
+                ×
+            </button>
+
+            <div id="authContent"></div>
+
+        </div>
+
+    </div>
+
+
+    <script src="app.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Messages | FreelancerHub 2.0</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+    <nav class="navbar">
+
+        <div class="logo">
+            FreelancerHub <span>2.0</span>
+        </div>
+
+        <div class="nav-actions">
+
+            <button
+                class="btn btn-secondary"
+                onclick="goDashboard()"
+            >
+                ← Dashboard
+            </button>
+
+            <button
+                class="btn btn-danger"
+                onclick="logout()"
+            >
+                Logout
+            </button>
+
+        </div>
+
+    </nav>
+
+
+    <!-- MAIN -->
+
+    <main class="dashboard-container">
+
+        <section class="dashboard-header">
+
+            <div>
+
+                <h1>Communication</h1>
+
+                <p>
+                    Manage your messages and notifications.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- SEND MESSAGE -->
+
+        <section class="dashboard-section">
+
+            <h2>Send Message</h2>
+
+            <form id="messageForm">
+
+                <div class="form-group">
+
+                    <label for="receiverId">
+                        Receiver User ID
+                    </label>
+
+                    <input
+                        type="number"
+                        id="receiverId"
+                        placeholder="Enter user ID"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="messageText">
+                        Message
+                    </label>
+
+                    <textarea
+                        id="messageText"
+                        rows="4"
+                        placeholder="Write your message..."
+                        required
+                    ></textarea>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+                    Send Message
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- MESSAGES -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <h2>My Messages</h2>
+
+                <button
+                    class="btn btn-secondary"
+                    onclick="loadMessages()"
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+
+            <div id="messagesContainer">
+
+                <p class="loading">
+                    Loading messages...
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- NOTIFICATIONS -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <h2>Notifications</h2>
+
+                <button
+                    class="btn btn-secondary"
+                    onclick="loadNotifications()"
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+
+            <div id="notificationsContainer">
+
+                <p class="loading">
+                    Loading notifications...
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script src="app.js"></script>
+
+
+    <script>
+
+        const token =
+            localStorage.getItem("token");
+
+        const role =
+            localStorage.getItem("role");
+
+        const currentUserId =
+            Number(
+                localStorage.getItem("user_id")
+            );
+
+
+        // CHECK LOGIN
+
+        if (!token) {
+
+            alert(
+                "Please login first."
+            );
+
+            window.location.href =
+                "index.html";
+
+        }
+
+
+        // AUTH HEADERS
+
+        function authHeaders() {
+
+            return {
+                "Authorization":
+                    `Bearer ${token}`
+            };
+
+        }
+
+
+        // SEND MESSAGE
+
+        document
+            .getElementById("messageForm")
+            .addEventListener(
+                "submit",
+                async function(event) {
+
+                    event.preventDefault();
+
+
+                    const receiverId =
+                        Number(
+                            document
+                                .getElementById(
+                                    "receiverId"
+                                )
+                                .value
+                        );
+
+
+                    const messageText =
+                        document
+                            .getElementById(
+                                "messageText"
+                            )
+                            .value
+                            .trim();
+
+
+                    if (
+                        !receiverId ||
+                        !messageText
+                    ) {
+
+                        alert(
+                            "Please enter receiver ID and message."
+                        );
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                `${API_URL}/communication/messages`,
+                                {
+                                    method: "POST",
+
+                                    headers: {
+                                        ...authHeaders(),
+
+                                        "Content-Type":
+                                            "application/json"
+                                    },
+
+                                    body:
+                                        JSON.stringify({
+                                            receiver_id:
+                                                receiverId,
+
+                                            message_text:
+                                                messageText
+                                        })
+                                }
+                            );
+
+
+                        const data =
+                            await response.json();
+
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                data.message ||
+                                "Failed to send message."
+                            );
+
+                        }
+
+
+                        alert(
+                            "Message sent successfully!"
+                        );
+
+
+                        document
+                            .getElementById(
+                                "messageForm"
+                            )
+                            .reset();
+
+
+                        loadMessages();
+
+
+                    } catch (error) {
+
+                        console.error(
+                            "Send message error:",
+                            error
+                        );
+
+                        alert(
+                            error.message
+                        );
+
+                    }
+
+                }
+            );
+
+
+        // LOAD MESSAGES
+
+        async function loadMessages() {
+
+            const container =
+                document.getElementById(
+                    "messagesContainer"
+                );
+
+
+            container.innerHTML = `
+                <p class="loading">
+                    Loading messages...
+                </p>
+            `;
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/communication/messages`,
+                        {
+                            headers:
+                                authHeaders()
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Failed to load messages."
+                    );
+
+                }
+
+
+                displayMessages(
+                    data.messages || []
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Message loading error:",
+                    error
+                );
+
+
+                container.innerHTML = `
+                    <div class="error-message">
+                        ${error.message}
+                    </div>
+                `;
+
+            }
+
+        }
+
+
+        // DISPLAY MESSAGES
+
+        function displayMessages(
+            messages
+        ) {
+
+            const container =
+                document.getElementById(
+                    "messagesContainer"
+                );
+
+
+            if (messages.length === 0) {
+
+                container.innerHTML = `
+                    <div class="empty-state">
+
+                        <h3>
+                            No Messages
+                        </h3>
+
+                        <p>
+                            Your conversations will appear here.
+                        </p>
+
+                    </div>
+                `;
+
+                return;
+
+            }
+
+
+            container.innerHTML =
+                messages.map(
+                    message => {
+
+                        const isSent =
+                            Number(
+                                message.sender_id
+                            ) === currentUserId;
+
+
+                        const unread =
+                            !Boolean(
+                                message.is_read
+                            ) &&
+                            !isSent;
+
+
+                        return `
+
+                            <div
+                                class="message-card
+                                ${unread ? "unread-message" : ""}"
+                            >
+
+                                <div class="message-header">
+
+                                    <div>
+
+                                        <strong>
+
+                                            ${
+                                                isSent
+                                                ? "To: "
+                                                : "From: "
+                                            }
+
+                                            ${
+                                                isSent
+                                                ? message.receiver_name
+                                                : message.sender_name
+                                            }
+
+                                        </strong>
+
+                                        <small>
+                                            ${formatDateTime(
+                                                message.sent_at
+                                            )}
+                                        </small>
+
+                                    </div>
+
+
+                                    ${
+                                        unread
+
+                                        ?
+
+                                        `
+                                        <span class="unread-badge">
+                                            Unread
+                                        </span>
+                                        `
+
+                                        :
+
+                                        `
+                                        <span class="read-badge">
+                                            Read
+                                        </span>
+                                        `
+                                    }
+
+                                </div>
+
+
+                                <p class="message-text">
+                                    ${message.message_text}
+                                </p>
+
+
+                                ${
+                                    unread
+
+                                    ?
+
+                                    `
+                                    <button
+                                        class="btn btn-secondary"
+                                        onclick="markMessageRead(
+                                            ${message.message_id}
+                                        )"
+                                    >
+                                        Mark as Read
+                                    </button>
+                                    `
+
+                                    :
+
+                                    ""
+                                }
+
+                            </div>
+
+                        `;
+
+                    }
+                ).join("");
+
+        }
+
+
+        // MARK MESSAGE AS READ
+
+        async function markMessageRead(
+            messageId
+        ) {
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/communication/messages/${messageId}/read`,
+                        {
+                            method: "PUT",
+
+                            headers:
+                                authHeaders()
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Failed to update message."
+                    );
+
+                }
+
+
+                loadMessages();
+
+
+            } catch (error) {
+
+                console.error(
+                    "Mark message error:",
+                    error
+                );
+
+                alert(
+                    error.message
+                );
+
+            }
+
+        }
+
+
+        // LOAD NOTIFICATIONS
+
+        async function loadNotifications() {
+
+            const container =
+                document.getElementById(
+                    "notificationsContainer"
+                );
+
+
+            container.innerHTML = `
+                <p class="loading">
+                    Loading notifications...
+                </p>
+            `;
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/communication/notifications`,
+                        {
+                            headers:
+                                authHeaders()
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Failed to load notifications."
+                    );
+
+                }
+
+
+                displayNotifications(
+                    data.notifications || []
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Notification loading error:",
+                    error
+                );
+
+
+                container.innerHTML = `
+                    <div class="error-message">
+                        ${error.message}
+                    </div>
+                `;
+
+            }
+
+        }
+
+
+        // DISPLAY NOTIFICATIONS
+
+        function displayNotifications(
+            notifications
+        ) {
+
+            const container =
+                document.getElementById(
+                    "notificationsContainer"
+                );
+
+
+            if (notifications.length === 0) {
+
+                container.innerHTML = `
+                    <div class="empty-state">
+
+                        <h3>
+                            No Notifications
+                        </h3>
+
+                        <p>
+                            You don't have any notifications.
+                        </p>
+
+                    </div>
+                `;
+
+                return;
+
+            }
+
+
+            container.innerHTML =
+                notifications.map(
+                    notification => {
+
+                        const unread =
+                            !Boolean(
+                                notification.is_read
+                            );
+
+
+                        return `
+
+                            <div
+                                class="notification-card
+                                ${unread ? "unread-notification" : ""}"
+                            >
+
+                                <div>
+
+                                    <h3>
+                                        ${notification.title}
+                                    </h3>
+
+                                    <p>
+                                        ${notification.message}
+                                    </p>
+
+                                    <small>
+                                        ${formatDateTime(
+                                            notification.created_at
+                                        )}
+                                    </small>
+
+                                </div>
+
+
+                                ${
+                                    unread
+
+                                    ?
+
+                                    `
+                                    <button
+                                        class="btn btn-secondary"
+                                        onclick="markNotificationRead(
+                                            ${notification.notification_id}
+                                        )"
+                                    >
+                                        Mark as Read
+                                    </button>
+                                    `
+
+                                    :
+
+                                    `
+                                    <span class="read-badge">
+                                        Read
+                                    </span>
+                                    `
+                                }
+
+                            </div>
+
+                        `;
+
+                    }
+                ).join("");
+
+        }
+
+
+        // MARK NOTIFICATION AS READ
+
+        async function markNotificationRead(
+            notificationId
+        ) {
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/communication/notifications/${notificationId}/read`,
+                        {
+                            method: "PUT",
+
+                            headers:
+                                authHeaders()
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.message ||
+                        "Failed to update notification."
+                    );
+
+                }
+
+
+                loadNotifications();
+
+
+            } catch (error) {
+
+                console.error(
+                    "Mark notification error:",
+                    error
+                );
+
+                alert(
+                    error.message
+                );
+
+            }
+
+        }
+
+
+        // DATE FORMAT
+
+        function formatDateTime(
+            date
+        ) {
+
+            if (!date) {
+                return "-";
+            }
+
+
+            return new Date(
+                date
+            ).toLocaleString(
+                "en-IN"
+            );
+
+        }
+
+
+        // DASHBOARD
+
+        function goDashboard() {
+
+            if (role === "CUSTOMER") {
+
+                window.location.href =
+                    "customer-dashboard.html";
+
+            } else if (
+                role === "FREELANCER"
+            ) {
+
+                window.location.href =
+                    "freelancer-dashboard.html";
+
+            } else {
+
+                window.location.href =
+                    "admin-dashboard.html";
+
+            }
+
+        }
+
+
+        // INITIAL LOAD
+
+        loadMessages();
+
+        loadNotifications();
+
+    </script>
+
+</body>
+
+</html>

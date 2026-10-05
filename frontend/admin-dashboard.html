@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Admin Dashboard - FreelancerHub</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+
+        <div class="logo">
+            FreelancerHub
+        </div>
+
+        <div class="nav-buttons">
+
+            <span id="userName">
+                Admin
+            </span>
+
+            <button
+                class="btn btn-outline"
+                onclick="logout()"
+            >
+                Logout
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- DASHBOARD -->
+    <main class="dashboard">
+
+        <div class="dashboard-header">
+
+            <div>
+
+                <p class="section-tag">
+                    ADMIN PANEL
+                </p>
+
+                <h1>
+                    Admin Dashboard 👋
+                </h1>
+
+                <p>
+                    Monitor users, projects and proposals.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- STATISTICS -->
+
+        <div class="stats-grid">
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    👥
+                </div>
+
+                <div>
+
+                    <p>Total Users</p>
+
+                    <h2 id="totalUsers">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    🧑‍💼
+                </div>
+
+                <div>
+
+                    <p>Customers</p>
+
+                    <h2 id="totalCustomers">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    💻
+                </div>
+
+                <div>
+
+                    <p>Freelancers</p>
+
+                    <h2 id="totalFreelancers">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    📋
+                </div>
+
+                <div>
+
+                    <p>Projects</p>
+
+                    <h2 id="totalProjects">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    📩
+                </div>
+
+                <div>
+
+                    <p>Proposals</p>
+
+                    <h2 id="totalProposals">
+                        0
+                    </h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- USERS -->
+
+        <section class="dashboard-section">
+
+            <div class="section-title">
+
+                <div>
+
+                    <p class="section-tag">
+                        USERS
+                    </p>
+
+                    <h2>
+                        Registered Users
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Created</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="usersTable">
+
+                        <tr>
+                            <td colspan="5">
+                                Loading users...
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <!-- PROJECTS -->
+
+        <section class="dashboard-section">
+
+            <div class="section-title">
+
+                <div>
+
+                    <p class="section-tag">
+                        PROJECTS
+                    </p>
+
+                    <h2>
+                        All Projects
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Customer</th>
+                            <th>Budget</th>
+                            <th>Status</th>
+                            <th>Deadline</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="projectsTable">
+
+                        <tr>
+                            <td colspan="6">
+                                Loading projects...
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <!-- PROPOSALS -->
+
+        <section class="dashboard-section">
+
+            <div class="section-title">
+
+                <div>
+
+                    <p class="section-tag">
+                        PROPOSALS
+                    </p>
+
+                    <h2>
+                        All Proposals
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>ID</th>
+                            <th>Project</th>
+                            <th>Freelancer</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="proposalsTable">
+
+                        <tr>
+                            <td colspan="5">
+                                Loading proposals...
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script src="app.js"></script>
+
+
+    <script>
+
+        const token =
+            localStorage.getItem("token");
+
+        const role =
+            localStorage.getItem("role");
+
+
+        // AUTH CHECK
+
+        if (!token || role !== "ADMIN") {
+
+            window.location.href =
+                "index.html";
+
+        }
+
+
+        // LOAD DASHBOARD
+
+        async function loadDashboard() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        "http://localhost:5000/api/admin/dashboard",
+                        {
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`
+                            }
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    alert(
+                        data.message ||
+                        "Failed to load dashboard"
+                    );
+
+                    return;
+                }
+
+
+                const stats =
+                    data.statistics;
+
+
+                document.getElementById(
+                    "totalUsers"
+                ).textContent =
+                    stats.total_users;
+
+
+                document.getElementById(
+                    "totalCustomers"
+                ).textContent =
+                    stats.total_customers;
+
+
+                document.getElementById(
+                    "totalFreelancers"
+                ).textContent =
+                    stats.total_freelancers;
+
+
+                document.getElementById(
+                    "totalProjects"
+                ).textContent =
+                    stats.total_projects;
+
+
+                document.getElementById(
+                    "totalProposals"
+                ).textContent =
+                    stats.total_proposals;
+
+            } catch (error) {
+
+                console.error(error);
+
+            }
+        }
+
+
+        // LOAD USERS
+
+        async function loadUsers() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        "http://localhost:5000/api/admin/users",
+                        {
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`
+                            }
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+                    return;
+                }
+
+
+                const users =
+                    data.users;
+
+
+                const table =
+                    document.getElementById(
+                        "usersTable"
+                    );
+
+
+                if (!users.length) {
+
+                    table.innerHTML = `
+                        <tr>
+                            <td colspan="5">
+                                No users found.
+                            </td>
+                        </tr>
+                    `;
+
+                    return;
+                }
+
+
+                table.innerHTML =
+                    users.map(user => `
+
+                        <tr>
+
+                            <td>
+                                ${user.user_id}
+                            </td>
+
+                            <td>
+                                ${user.name}
+                            </td>
+
+                            <td>
+                                ${user.email}
+                            </td>
+
+                            <td>
+                                <span class="role-badge">
+                                    ${user.role}
+                                </span>
+                            </td>
+
+                            <td>
+                                ${formatDate(user.created_at)}
+                            </td>
+
+                        </tr>
+
+                    `).join("");
+
+            } catch (error) {
+
+                console.error(error);
+
+            }
+        }
+
+
+        // LOAD PROJECTS
+
+        async function loadProjects() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        "http://localhost:5000/api/admin/projects",
+                        {
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`
+                            }
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+                    return;
+                }
+
+
+                const projects =
+                    data.projects;
+
+
+                const table =
+                    document.getElementById(
+                        "projectsTable"
+                    );
+
+
+                if (!projects.length) {
+
+                    table.innerHTML = `
+                        <tr>
+                            <td colspan="6">
+                                No projects found.
+                            </td>
+                        </tr>
+                    `;
+
+                    return;
+                }
+
+
+                table.innerHTML =
+                    projects.map(project => `
+
+                        <tr>
+
+                            <td>
+                                ${project.project_id}
+                            </td>
+
+                            <td>
+                                ${project.title}
+                            </td>
+
+                            <td>
+                                ${project.customer_name}
+                            </td>
+
+                            <td>
+                                ₹${Number(project.budget).toLocaleString("en-IN")}
+                            </td>
+
+                            <td>
+                                <span class="status status-${project.status}">
+                                    ${project.status}
+                                </span>
+                            </td>
+
+                            <td>
+                                ${formatDate(project.deadline)}
+                            </td>
+
+                        </tr>
+
+                    `).join("");
+
+            } catch (error) {
+
+                console.error(error);
+
+            }
+        }
+
+
+        // LOAD PROPOSALS
+
+        async function loadProposals() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        "http://localhost:5000/api/admin/proposals",
+                        {
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`
+                            }
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+                    return;
+                }
+
+
+                const proposals =
+                    data.proposals;
+
+
+                const table =
+                    document.getElementById(
+                        "proposalsTable"
+                    );
+
+
+                if (!proposals.length) {
+
+                    table.innerHTML = `
+                        <tr>
+                            <td colspan="5">
+                                No proposals found.
+                            </td>
+                        </tr>
+                    `;
+
+                    return;
+                }
+
+
+                table.innerHTML =
+                    proposals.map(proposal => `
+
+                        <tr>
+
+                            <td>
+                                ${proposal.proposal_id}
+                            </td>
+
+                            <td>
+                                ${proposal.project_title}
+                            </td>
+
+                            <td>
+                                ${proposal.freelancer_name}
+                            </td>
+
+                            <td>
+                                ₹${Number(proposal.proposed_amount).toLocaleString("en-IN")}
+                            </td>
+
+                            <td>
+                                <span class="status proposal-${proposal.status}">
+                                    ${proposal.status}
+                                </span>
+                            </td>
+
+                        </tr>
+
+                    `).join("");
+
+            } catch (error) {
+
+                console.error(error);
+
+            }
+        }
+
+
+        // FORMAT DATE
+
+        function formatDate(date) {
+
+            if (!date) {
+                return "-";
+            }
+
+            return new Date(date)
+                .toLocaleDateString("en-IN");
+        }
+
+
+        // INITIAL LOAD
+
+        loadDashboard();
+        loadUsers();
+        loadProjects();
+        loadProposals();
+
+    </script>
+
+</body>
+
+</html>
