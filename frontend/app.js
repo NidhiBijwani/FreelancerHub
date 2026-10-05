@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://freelancerhub-production-2295.up.railway.app/api";
 
 
 // SHOW LOGIN
