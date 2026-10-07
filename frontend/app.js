@@ -1,6 +1,10 @@
 const API_URL = "https://freelancerhub-production-2295.up.railway.app/api";
 
 
+// GOOGLE CLIENT ID
+const GOOGLE_CLIENT_ID = "1088384084828-t7o2vc316g2sajvq4p797dr45hbvsule.apps.googleusercontent.com";
+
+
 // SHOW LOGIN
 function showLogin() {
 
@@ -8,11 +12,15 @@ function showLogin() {
     const content = document.getElementById("authContent");
 
     content.innerHTML = `
+
         <h2>Welcome Back</h2>
 
         <p class="auth-subtitle">
             Login to your FreelancerHub account
         </p>
+
+
+        <!-- Normal Login -->
 
         <form id="loginForm">
 
@@ -24,6 +32,7 @@ function showLogin() {
                 required
             >
 
+
             <label>Password</label>
 
             <input
@@ -31,6 +40,7 @@ function showLogin() {
                 id="loginPassword"
                 required
             >
+
 
             <button
                 type="submit"
@@ -41,21 +51,232 @@ function showLogin() {
 
         </form>
 
+
+        <!-- Divider -->
+
+        <div class="auth-divider">
+            <span>OR</span>
+        </div>
+
+
+        <!-- Role for new Google users -->
+
+        <label>
+            Account Type
+        </label>
+
+        <select id="googleRole">
+
+            <option value="">
+                Select account type
+            </option>
+
+            <option value="CUSTOMER">
+                Customer
+            </option>
+
+            <option value="FREELANCER">
+                Freelancer
+            </option>
+
+        </select>
+
+
+        <!-- Google Login Button -->
+
+        <div
+            id="googleLoginButton"
+            style="margin-top: 15px;"
+        ></div>
+
+
         <p class="auth-switch">
+
             Don't have an account?
+
             <button onclick="showRegister()">
                 Register
             </button>
+
         </p>
+
     `;
+
+
+    // Show modal
 
     modal.classList.remove("hidden");
 
+
+    // Normal login
+
     document
         .getElementById("loginForm")
-        .addEventListener("submit", loginUser);
+        .addEventListener(
+            "submit",
+            loginUser
+        );
+
+
+    // Render Google button
+
+    renderGoogleButton();
 }
 
+
+// RENDER GOOGLE BUTTON
+function renderGoogleButton() {
+
+    // Google library has not loaded yet
+    if (
+        !window.google ||
+        !window.google.accounts ||
+        !window.google.accounts.id
+    ) {
+
+        setTimeout(
+            renderGoogleButton,
+            500
+        );
+
+        return;
+    }
+
+
+    google.accounts.id.initialize({
+
+        client_id: GOOGLE_CLIENT_ID,
+
+        callback: handleGoogleLogin
+
+    });
+
+
+    google.accounts.id.renderButton(
+
+        document.getElementById(
+            "googleLoginButton"
+        ),
+
+        {
+            theme: "outline",
+            size: "large",
+            text: "continue_with",
+            shape: "rectangular",
+            width: 300
+        }
+
+    );
+}
+
+// HANDLE GOOGLE LOGIN
+async function handleGoogleLogin(response) {
+
+    const role =
+        document
+            .getElementById("googleRole")
+            .value;
+
+
+    try {
+
+        const result = await fetch(
+            `${API_URL}/auth/google`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    credential:
+                        response.credential,
+
+                    role: role
+
+                })
+            }
+        );
+
+
+        const data =
+            await result.json();
+
+
+        // Login failed
+
+        if (!result.ok) {
+
+            alert(
+                data.message ||
+                "Google login failed"
+            );
+
+            return;
+        }
+
+
+        // Store JWT
+
+        localStorage.setItem(
+            "token",
+            data.token
+        );
+
+
+        // Store role
+
+        localStorage.setItem(
+            "role",
+            data.user.role
+        );
+
+
+        // Store user ID
+
+        localStorage.setItem(
+            "user_id",
+            data.user.user_id
+        );
+
+
+        // Store user name
+
+        localStorage.setItem(
+            "user_name",
+            data.user.name
+        );
+
+
+        alert(
+            "Google login successful!"
+        );
+
+
+        closeModal();
+
+
+        // Redirect according to role
+
+        redirectToDashboard(
+            data.user.role
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Google login error:",
+            error
+        );
+
+        alert(
+            "Unable to connect to the server."
+        );
+    }
+}
 
 // SHOW REGISTER
 function showRegister() {
