@@ -1,16 +1,24 @@
 const express = require("express");
 
-const {
-    register,
-    login
-} = require("../controllers/authController");
-
 const router = express.Router();
 
-// Register
+const {
+    register,
+    login,
+    googleLogin
+} = require("../controllers/authController");
+
+
+// Normal registration
 router.post("/register", register);
 
-// Login
+
+// Normal email/password login
 router.post("/login", login);
+
+
+// Google login
+router.post("/google", googleLogin);
+
 
 module.exports = router;

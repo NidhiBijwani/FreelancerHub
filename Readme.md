@@ -247,16 +247,3 @@ Passwords are securely hashed using bcrypt and authentication is handled using J
 **Completed and tested**
 
 The major application workflows including authentication, project creation, proposal submission, proposal acceptance, contract creation, messaging, notifications, and reviews have been tested successfully.
-
-## 👩‍💻 Author
-
-**Nidhi Bijwani**
-
-Electronics & Telecommunication Engineering Student
-
-GitHub:
-https://github.com/NidhiBijwani
-
----
-
-⭐ If you find this project useful, consider giving the repository a star!
